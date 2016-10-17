@@ -1,6 +1,6 @@
 # Always start with an API version. This will increment as Quicksilver evolves.
 api_version: 1
-
+drush_version: 8
 workflows:
   sync_code:
     after:
