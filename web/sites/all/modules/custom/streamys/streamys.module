@@ -1,0 +1,81 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function streamys_menu() {
+  $items = [];
+
+  $items['streamys/csv'] = [
+    'title' => 'Build a csv file locally',
+    'description' => 'Description',
+    'access callback' => TRUE,
+    'page callback' => 'streamys_csv',
+    'page arguments' => [],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  $items['streamys/csv-stream'] = [
+    'title' => 'Stream output to user.',
+    'description' => 'Description',
+    'access callback' => TRUE,
+    'page callback' => 'streamys_csv_stream',
+    'page arguments' => [],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  return $items;
+}
+
+/**
+ * Page callback to generate a dummy csv and stream it across the network.
+ */
+function streamys_csv() {
+  global $base_url;
+  $limit = 100;
+  $edi_directory_name = 'edi-export-' . 1 . '-' . format_date(REQUEST_TIME, 'custom', 'm-d-Y-Hi');
+  $edi_directory_uri = 'public://edi/' . $edi_directory_name;
+  $dir = drupal_dirname($edi_directory_uri);
+  file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
+  $csv_file_uri = $edi_directory_uri . '.csv';
+
+  $fp = fopen(drupal_realpath($csv_file_uri), 'w');
+
+  $fnames = ['Chris', 'Colin', 'Justin', 'Marley'];
+  $lnames = ['Zietlow', 'Crampton', 'Rokisky', 'Boss'];
+
+  fputcsv($fp, ["Last Name", "First Name"]);
+
+  for ($i=0;$i<$limit;$i++) {
+    $first = $fnames[array_rand($fnames, 1)];
+    $last =  $lnames[array_rand($lnames, 1)];
+    fputcsv($fp, [$first, $last]);
+  }
+  fclose($fp);
+
+  return "<a href='$base_url/sites/default/files/edi/$edi_directory_name.csv'>EDI Download</a>";
+}
+
+/**
+ * Page callback to generate a dummy csv and stream it across the network.
+ */
+function streamys_csv_stream() {
+  header('Content-type: text/csv; charset=UTF-8');
+  header('Content-disposition: attachment; filename=report.csv');
+  $fp = fopen('php://output','w');
+
+  $limit = 100;
+
+  $fnames = ['Chris', 'Colin', 'Justin', 'Marley'];
+  $lnames = ['Zietlow', 'Crampton', 'Rokisky', 'Boss'];
+
+  fputcsv($fp, ["Last Name", "First Name"]);
+
+  for ($i=0;$i<$limit;$i++) {
+    $first = $fnames[array_rand($fnames, 1)];
+    $last =  $lnames[array_rand($lnames, 1)];
+    fputcsv($fp, [$first, $last]);
+  }
+  fclose($fp);
+}
+

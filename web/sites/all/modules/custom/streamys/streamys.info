@@ -1,0 +1,4 @@
+name = Streamys smoke test
+description = Testing streaming files over the network
+package = Development
+core = 7.x
