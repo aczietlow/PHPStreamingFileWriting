@@ -8,7 +8,6 @@ function streamys_menu() {
 
   $items['streamys/csv'] = [
     'title' => 'Build a csv file locally',
-    'description' => 'Description',
     'access callback' => TRUE,
     'page callback' => 'streamys_csv',
     'page arguments' => [],
@@ -17,9 +16,16 @@ function streamys_menu() {
 
   $items['streamys/csv-stream'] = [
     'title' => 'Stream output to user.',
-    'description' => 'Description',
     'access callback' => TRUE,
     'page callback' => 'streamys_csv_stream',
+    'page arguments' => [],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  $items['streamys/csv-batch-stream'] = [
+    'title' => 'Batch stream output to user.',
+    'access callback' => TRUE,
+    'page callback' => 'streamys_batch_csv_stream',
     'page arguments' => [],
     'type' => MENU_NORMAL_ITEM,
   ];
@@ -107,4 +113,71 @@ function streamys_csv_stream() {
   }
   fclose($fp);
 }
+
+function streamys_batch_csv_stream() {
+  header('Content-type: text/csv; charset=UTF-8');
+  header('Content-disposition: attachment; filename=report.csv');
+  $fp = fopen('php://output','w');
+
+  $fnames = ['Chris', 'Colin', 'Justin', 'Marley'];
+  $lnames = ['Zietlow', 'Crampton', 'Rokisky', 'Boss'];
+  $limit = variable_get('csv_size', 100);
+
+  fputcsv($fp, ["Last Name", "First Name"]);
+  $results = [];
+  for ($i=0;$i<$limit;$i++) {
+    $first = $fnames[array_rand($fnames, 1)];
+    $last =  $lnames[array_rand($lnames, 1)];
+    $results[] = [
+      'first' => $first,
+      'last' => $last,
+    ];
+  }
+
+  $batch = [
+    'operations' => [],
+    'finished' => 'streamys_batch_csv_finished',
+    'title' => t('Build "EDI"'),
+    'init_message' => t('Building fake EDI...'),
+    'progress_message' => t('Processed @current out of @total.'),
+    'error_message' => t('EDI has encountered an error.')
+  ];
+
+  foreach ($results as $result) {
+    $batch['operations'][] = ['streamys_batch_csv_process', [$result, $fp]];
+  }
+  batch_set($batch);
+  // The path to redirect to when done.
+  batch_process('<front>');
+}
+
+/**
+ * The batch processor.
+ */
+function streamys_batch_csv_process($result, $fp, &$context) {
+  // Do heavy lifting here...
+  // Display a progress message...
+  fputcsv($fp, [$result['first'], $result['last']]);
+  sleep(1);
+  $context['message'] = "Now processing..." . $result['first'];
+}
+
+/**
+ * The batch finish handler.
+ */
+function streamys_batch_csv_finished($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message('Fix is complete!');
+  }
+  else {
+    $error_operation = reset($operations);
+    $message = t('An error occurred while processing %error_operation with arguments: @arguments', array(
+      '%error_operation' => $error_operation[0],
+      '@arguments' => print_r($error_operation[1], TRUE)
+    ));
+    drupal_set_message($message, 'error');
+  }
+  drupal_set_message(l('Run again', 'my_module/batch_fix'));
+}
+
 
