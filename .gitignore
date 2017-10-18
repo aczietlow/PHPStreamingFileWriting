@@ -46,3 +46,13 @@ Thumbs.db
 # SASS #
 ##########
 .sass-cache
+
+.idea/
+
+vendor/
+bin/
+build/logs/
+.vagrant/
+node_modules/
+artifacts/*
+!artifacts/.gitkeep

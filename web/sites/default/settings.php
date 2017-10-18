@@ -628,3 +628,10 @@ $conf['404_fast_html'] = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
  * @see drupal_clean_css_identifier()
  */
 # $conf['allow_css_double_underscores'] = TRUE;
+
+
+// Load local settings file if it exists.
+$local_conf_file_path = __DIR__ . '/settings.local.php';
+if (file_exists($local_conf_file_path)) {
+  require($local_conf_file_path);
+}
