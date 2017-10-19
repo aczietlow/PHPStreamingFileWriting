@@ -69,12 +69,12 @@ function streamys_csv() {
   global $base_url;
   $limit = variable_get('csv_size', 100);
   $edi_directory_name = 'edi-export-' . 1 . '-' . format_date(REQUEST_TIME, 'custom', 'm-d-Y-Hi');
-  $edi_directory_uri = 'public://edi/' . $edi_directory_name;
+  $edi_directory_uri = 's3://edi/' . $edi_directory_name;
   $dir = drupal_dirname($edi_directory_uri);
   file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
   $csv_file_uri = $edi_directory_uri . '.csv';
 
-  $fp = fopen(drupal_realpath($csv_file_uri), 'w');
+  $fp = fopen($csv_file_uri, 'w');
 
   $fnames = ['Chris', 'Colin', 'Justin', 'Marley'];
   $lnames = ['Zietlow', 'Crampton', 'Rokisky', 'Boss'];
