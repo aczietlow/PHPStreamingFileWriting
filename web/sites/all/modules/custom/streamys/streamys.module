@@ -14,6 +14,22 @@ function streamys_menu() {
     'type' => MENU_NORMAL_ITEM,
   ];
 
+  $items['streamys/csv-s3'] = [
+    'title' => 'Build a csv file on S3',
+    'access callback' => TRUE,
+    'page callback' => 'streamys_csv_s3',
+    'page arguments' => [],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
+  $items['streamys/zip-s3'] = [
+    'title' => 'Build a zip file on S3',
+    'access callback' => TRUE,
+    'page callback' => 'streamys_zip_s3',
+    'page arguments' => [],
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
   $items['streamys/csv-stream'] = [
     'title' => 'Stream output to user.',
     'access callback' => TRUE,
@@ -69,7 +85,7 @@ function streamys_csv() {
   global $base_url;
   $limit = variable_get('csv_size', 100);
   $edi_directory_name = 'edi-export-' . 1 . '-' . format_date(REQUEST_TIME, 'custom', 'm-d-Y-Hi');
-  $edi_directory_uri = 's3://edi/' . $edi_directory_name;
+  $edi_directory_uri = 'public://edi/' . $edi_directory_name;
   $dir = drupal_dirname($edi_directory_uri);
   file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
   $csv_file_uri = $edi_directory_uri . '.csv';
@@ -181,3 +197,59 @@ function streamys_batch_csv_finished($success, $results, $operations) {
 }
 
 
+/**
+ * Creates csv on s3 bucket.
+ */
+function streamys_csv_s3() {
+  $limit = variable_get('csv_size', 100);
+  $edi_directory_name = 'edi-export-' . 1 . '-' . format_date(REQUEST_TIME, 'custom', 'm-d-Y-Hi');
+  $edi_directory_uri = 's3://edi/' . $edi_directory_name;
+  $dir = drupal_dirname($edi_directory_uri);
+  file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
+  $csv_file_uri = $edi_directory_uri . '.csv';
+
+  $fp = fopen($csv_file_uri, 'w');
+
+  $fnames = ['Chris', 'Colin', 'Justin', 'Marley'];
+  $lnames = ['Zietlow', 'Crampton', 'Rokisky', 'Boss'];
+
+  fputcsv($fp, ["Last Name", "First Name"]);
+
+  for ($i=0;$i<$limit;$i++) {
+    $first = $fnames[array_rand($fnames, 1)];
+    $last =  $lnames[array_rand($lnames, 1)];
+    fputcsv($fp, [$first, $last]);
+  }
+  fclose($fp);
+  $url = file_create_url($csv_file_uri);
+  return "<a href='$url'>EDI Download</a>";
+}
+
+/**
+ * Creates csv on s3 bucket.
+ */
+function streamys_zip_s3() {
+
+  $limit = variable_get('csv_size', 100);
+  $edi_directory_name = 'edi-export-' . 1 . '-' . format_date(REQUEST_TIME, 'custom', 'm-d-Y-Hi');
+  $edi_directory_uri = 's3://edi/' . $edi_directory_name;
+  $dir = drupal_dirname($edi_directory_uri);
+  file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
+  $csv_file_uri = $edi_directory_uri . '.csv';
+
+  $fp = fopen($csv_file_uri, 'w');
+
+  $fnames = ['Chris', 'Colin', 'Justin', 'Marley'];
+  $lnames = ['Zietlow', 'Crampton', 'Rokisky', 'Boss'];
+
+  fputcsv($fp, ["Last Name", "First Name"]);
+
+  for ($i=0;$i<$limit;$i++) {
+    $first = $fnames[array_rand($fnames, 1)];
+    $last =  $lnames[array_rand($lnames, 1)];
+    fputcsv($fp, [$first, $last]);
+  }
+  fclose($fp);
+  $url = file_create_url($csv_file_uri);
+  return "<a href='$url'>EDI Download</a>";
+}

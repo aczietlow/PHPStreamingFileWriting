@@ -52,7 +52,7 @@ return array(
             'endpoint' => 'sdb.amazonaws.com'
         ),
         'us-east-1/s3' => array(
-            'endpoint' => 's3.amazonaws.com'
+            'endpoint' => 'storage.googleapis.com'
         ),
         'us-west-1/s3' => array(
             'endpoint' => 's3-{region}.amazonaws.com'
