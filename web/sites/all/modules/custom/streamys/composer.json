@@ -1,9 +1,5 @@
 {
   "require": {
-    "barracudanetworks/archivestream-php": "^1.0"
-  },
-  "config": {
-    "bin-dir": "bin",
-    "process-timeout": 1200
+    "maennchen/zipstream-php": "*"
   }
 }

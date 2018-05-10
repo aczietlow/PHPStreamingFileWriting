@@ -66,6 +66,11 @@ function streamys_config_form() {
     '#title' => 'CSV Size',
     '#default_value' => variable_get('csv_size', 100),
   ];
+  $form['zip_limit'] = [
+    '#type' => 'textfield',
+    '#title' => 'Zip Size',
+    '#default_value' => variable_get('zip_size', 100),
+  ];
   $form['submit'] = [
     '#type' => 'submit',
     '#value' => 'submit',
@@ -76,6 +81,7 @@ function streamys_config_form() {
 
 function streamys_config_form_submit($form, &$form_state) {
   variable_set('csv_size', $form_state['values']['limit']);
+  variable_set('zip_size', $form_state['values']['zip_limit']);
 }
 
 /**
@@ -229,27 +235,33 @@ function streamys_csv_s3() {
  * Creates csv on s3 bucket.
  */
 function streamys_zip_s3() {
+  $limit = variable_get('zip_size', 100);
 
-  $limit = variable_get('csv_size', 100);
+  require __DIR__ . '/vendor/autoload.php';
+
+  // Prep file structures.
   $edi_directory_name = 'edi-export-' . 1 . '-' . format_date(REQUEST_TIME, 'custom', 'm-d-Y-Hi');
   $edi_directory_uri = 's3://edi/' . $edi_directory_name;
   $dir = drupal_dirname($edi_directory_uri);
   file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
   $csv_file_uri = $edi_directory_uri . '.csv';
+  $zip_file_uri = $edi_directory_uri . '.zip';
+  $image = drupal_get_path('module', 'streamys') . '/assets/very_large_image.jpg';
 
-  $fp = fopen($csv_file_uri, 'w');
-
-  $fnames = ['Chris', 'Colin', 'Justin', 'Marley'];
-  $lnames = ['Zietlow', 'Crampton', 'Rokisky', 'Boss'];
-
-  fputcsv($fp, ["Last Name", "First Name"]);
+  $zip_stream = fopen($zip_file_uri, 'w');
+  $zip = new ZipStream\ZipStream(NULL, [
+    'output_stream' => $zip_stream,
+    'send_http_headers' => FALSE,
+    ]);
+  $zip->addFile('dir/hello.txt', 'This is the contents of hello.txt');
 
   for ($i=0;$i<$limit;$i++) {
-    $first = $fnames[array_rand($fnames, 1)];
-    $last =  $lnames[array_rand($lnames, 1)];
-    fputcsv($fp, [$first, $last]);
+    $zip->addFileFromPath("product_image_$i.jpg", $image);
   }
-  fclose($fp);
-  $url = file_create_url($csv_file_uri);
-  return "<a href='$url'>EDI Download</a>";
+
+  $zip->finish();
+  fclose($zip_stream);
+
+  $url = file_create_url($zip_file_uri);
+  return "<a href='$url'>EDI ZIP Download</a>";
 }
