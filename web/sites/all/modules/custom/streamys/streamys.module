@@ -56,7 +56,21 @@ function streamys_menu() {
     'type' => MENU_NORMAL_ITEM,
   ];
 
+  $items['streamys/pdf-batch-stream'] = [
+    'title' => 'Stream pdf zip to S3.',
+    'access callback' => TRUE,
+    'page callback' => 'streamys_batch_pdf_stream',
+    'type' => MENU_NORMAL_ITEM,
+  ];
+
   return $items;
+}
+
+/**
+ * Implements hook_init().
+ */
+function streamys_init() {
+  require __DIR__ . '/vendor/autoload.php';
 }
 
 function streamys_config_form() {
@@ -264,4 +278,35 @@ function streamys_zip_s3() {
 
   $url = file_create_url($zip_file_uri);
   return "<a href='$url'>EDI ZIP Download</a>";
+}
+
+/**
+ * Creates csv on s3 bucket.
+ */
+function streamys_batch_pdf_stream() {
+  $limit = variable_get('zip_size', 100);
+  $pdf_directory_name = 'pdf-export-' . 1 . '-' . format_date(REQUEST_TIME, 'custom', 'm-d-Y-Hi');
+  $pdf_directory_uri = 's3://pdfs/' . $pdf_directory_name;
+  $dir = drupal_dirname($pdf_directory_uri);
+  file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
+
+  $zip_file_uri = $pdf_directory_uri . '.zip';
+  $pdf = drupal_get_path('module', 'streamys') . '/assets/dmv.pdf';
+
+  $zip_stream = fopen($zip_file_uri, 'w');
+  $zip = new ZipStream\ZipStream(NULL, [
+    'output_stream' => $zip_stream,
+    'send_http_headers' => FALSE,
+  ]);
+  $zip->addFile('dir/hello.txt', 'This is the contents of hello.txt');
+
+  for ($i=0;$i<$limit;$i++) {
+    $zip->addFileFromPath("pdf_file_$i.jpg", $pdf);
+  }
+
+  $zip->finish();
+  fclose($zip_stream);
+
+  $url = file_create_url($zip_file_uri);
+  return "<a href='$url'>Download PDF</a>";
 }

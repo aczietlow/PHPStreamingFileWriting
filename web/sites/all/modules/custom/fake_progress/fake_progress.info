@@ -1,0 +1,4 @@
+name = Fake progress
+description = Testing batching slow processes
+package = Development
+core = 7.x
